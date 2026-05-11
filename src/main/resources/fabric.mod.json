@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "bsu",
+  "version": "${version}",
+  "name": "BasicallyServerUtils",
+  "description": "bull shit underwear",
+  "authors": [
+    "Chemthunder"
+  ],
+  "license": "CC0-1.0",
+  "icon": "assets/bsu/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.chemthunder.bsu.impl.BasicallyServerUtils"
+    ],
+    "client": [
+      "net.chemthunder.bsu.impl.BasicallyServerUtilsClient"
+    ],
+    "fabric-datagen": [
+      "net.chemthunder.bsu.data.BasicallyServerUtilsDataGen"
+    ],
+    "cardinal-components": [
+      "net.chemthunder.bsu.impl.BasicallyServerUtils"
+    ]
+  },
+  "mixins": [
+    "bsu.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "custom": {
+    "cardinal-components": [
+      "bsu:data"
+    ]
+  }
+}
