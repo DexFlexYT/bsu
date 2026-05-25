@@ -2,7 +2,6 @@ package net.chemthunder.bsu.impl.event.command;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.chemthunder.bsu.impl.cca.entity.PlayerDataComponent;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -10,6 +9,8 @@ import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
@@ -27,38 +28,41 @@ public class NickCommand implements CommandRegistrationCallback {
                             String toApply = StringArgumentType.getString(context, "text");
 
                             data.setName(toApply);
+                            context.getSource().sendFeedback(()->Text.literal("Display name changed to \"" + toApply + "\""), false);
                             return Command.SINGLE_SUCCESS;
                         })))
 
                         .then(literal("color")
-                                .then(literal("r").then(argument("r", IntegerArgumentType.integer()).executes(context -> {
-                                    PlayerEntity player = context.getSource().getPlayerOrThrow();
-                                    PlayerDataComponent data = PlayerDataComponent.KEY.get(player);
-                                    int toApply = IntegerArgumentType.getInteger(context, "r");
+                            .then(argument("hex", StringArgumentType.word()).executes(context -> {
+                                PlayerEntity player = context.getSource().getPlayerOrThrow();
+                                PlayerDataComponent data = PlayerDataComponent.KEY.get(player);
+                                String hex = StringArgumentType.getString(context, "hex");
 
-                                    data.setR(toApply);
-                                    return Command.SINGLE_SUCCESS;
-                                })))
+                                if (hex.startsWith("#")) hex = hex.substring(1);
 
-                                .then(literal("g").then(argument("g", IntegerArgumentType.integer()).executes(context -> {
-                                    PlayerEntity player = context.getSource().getPlayerOrThrow();
-                                    PlayerDataComponent data = PlayerDataComponent.KEY.get(player);
-                                    int toApply = IntegerArgumentType.getInteger(context, "g");
+                                if (hex.length() != 6 || !hex.matches("[0-9a-fA-F]+")) {
+                                    context.getSource().sendError(Text.literal("Invalid hex color, use format #RRGGBB"));
+                                    return 0;
+                                }
+                                int r = Integer.parseInt(hex.substring(0, 2), 16);
+                                int g = Integer.parseInt(hex.substring(2, 4), 16);
+                                int b = Integer.parseInt(hex.substring(4, 6), 16);
 
-                                    data.setG(toApply);
-                                    return Command.SINGLE_SUCCESS;
-                                })))
+                                data.setR(r);
+                                data.setG(g);
+                                data.setB(b);
+                                final String color = hex;
+                                int packed = (r << 16) | (g << 8) | b;
 
-                                .then(literal("b").then(argument("b", IntegerArgumentType.integer()).executes(context -> {
-                                    PlayerEntity player = context.getSource().getPlayerOrThrow();
-                                    PlayerDataComponent data = PlayerDataComponent.KEY.get(player);
-                                    int toApply = IntegerArgumentType.getInteger(context, "b");
-
-                                    data.setB(toApply);
-                                    return Command.SINGLE_SUCCESS;
-                                })))
+                                context.getSource().sendFeedback(() ->
+                                    Text.literal("Name color changed to \"")
+                                        .append(Text.literal("#" + color)
+                                            .setStyle(Style.EMPTY.withColor(packed)))
+                                        .append(Text.literal("\"")),
+                                false);
+                                return Command.SINGLE_SUCCESS;
+                            })))
                         )
-                )
-        );
+                );
     }
 }
